@@ -1,23 +1,7 @@
-# TinyLoRa-BME280
-Version 1.0
-The Things Network TTN Labs Tutorial https://www.thethingsnetwork.org/labs/story/tinylora-atmospheric-sensor
-Arduino library for a Atmospheric Sensor BME280 LoRaWan Node.
-The LoRa Node measures barometric pressure, humidity, and temperature every 15 min. 
-After the measurements, the ATtiny85 goes into sleep mode and is awakened by the watchdog timer.
-The RFM module sends the values to the TTN backend with Activation by Personalization (ABP) 
-a fixed spreading factor and one of the four random channels.
-The example sketch that fits in the 8K Bytes Flash Memory of the ATtiny85
+# TinyLoRa
 
-# installing
-Install the zip file in your Arduino IDE.
-Click on the toolbar menu: Sketch -> Include Library -> Add .ZIP Library -> "downloaded zip file"
-Once done click OK to save and restart the Arduino IDE.
+[![Build Status](https://travis-ci.org/adafruit/TinyLoRa.svg?branch=master)](https://travis-ci.org/adafruit/TinyLoRa)
 
-We use the tinySPI library http://github.com/JChristensen/tinySPI
-for communication with the BME280 and the Hope RFM95 module.
-Install this library too.
+Small driver for communication with [The Things Network](https://www.thethingsnetwork.org/) using a RFM95/96/97/98(W) LoRa Transceiver Module. 
 
-# changes
-Change the NwkSkey,AppSkey,DevAddr acording your own TTN keys.
-Change the interval of measurements and radio transmission with the SLEEP_TOTAL var
-Change Spreading factor as you like.
+For usage instructions with the [Adafruit Feather 32u4 RFM95](https://www.adafruit.com/product/3078), [check out our learn guide here](https://learn.adafruit.com/the-things-network-for-feather/using-a-feather-32u4).
