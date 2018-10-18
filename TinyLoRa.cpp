@@ -15,11 +15,13 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************************/
 #include "TinyLoRa.h"
-#include <SPI.h>   // ATmega328p
+#include <SPI.h>
 
 extern uint8_t NwkSkey[16];
 extern uint8_t AppSkey[16];
 extern uint8_t DevAddr[4];
+
+static SPISettings RFM_spisettings = SPISettings(4000000, MSBFIRST, SPI_MODE0);
 
 /*
 *****************************************************************************************
@@ -119,6 +121,10 @@ TinyLoRa::TinyLoRa(int8_t rfm__irq, int8_t rfm_nss) {
 
 void TinyLoRa::begin() 
 {
+
+  // start and configure SPI
+  SPI.begin();
+  
   // RFM95 ss as output
   pinMode(_cs, OUTPUT);
 
@@ -164,7 +170,7 @@ void TinyLoRa::begin()
   // init tx random number for first use
   uint8_t txrandomNum = 0x00;
   #ifdef DEBUG
-  Serial.println("> RFM module initialized"); 
+    Serial.println("> RFM module initialized"); 
   #endif
 
 }
@@ -290,14 +296,10 @@ void TinyLoRa::RFM_Write(unsigned char RFM_Address, unsigned char RFM_Data)
     Serial.println(RFM_Data, HEX);
   #endif
 
-  //Set NSS pin Low to start communication
-  digitalWrite(_cs, 0);
+  SPI.beginTransaction(RFM_spisettings);
 
-  // br: SPI Transfer Debug
-  #ifdef DEBUG
-    Serial.print("SPI Write ADDR: ");
-    Serial.print(RFM_Address, HEX);
-  #endif
+  //Set NSS pin Low to start communication
+  digitalWrite(_cs, LOW);
 
   //Send Address with MSB 1 to make it a writ command
   SPI.transfer(RFM_Address | 0x80);
@@ -305,7 +307,7 @@ void TinyLoRa::RFM_Write(unsigned char RFM_Address, unsigned char RFM_Data)
   SPI.transfer(RFM_Data);
 
   //Set NSS pin High to end communication
-  digitalWrite(_cs, 1);
+  digitalWrite(_cs, HIGH);
 }
 /*
 *****************************************************************************************
@@ -362,8 +364,10 @@ void TinyLoRa::sendData(unsigned char *Data, unsigned char Data_Length, unsigned
 
   //Add data Lenth to package length
   RFM_Package_Length = RFM_Package_Length + Data_Length;
-  Serial.print("Package length: ");
-  Serial.println(RFM_Package_Length);
+  #ifdef DEBUG
+    Serial.print("Package length: ");
+    Serial.println(RFM_Package_Length);
+  #endif
   
   //Calculate MIC
   Calculate_MIC(RFM_Data, MIC, RFM_Package_Length, Frame_Counter_Tx, Direction);
