@@ -42,7 +42,6 @@ void setup()
   
   // Initialize LoRa
   Serial.println("Starting LoRa...");
-  SPI.begin();
   lora.begin();
 }
 
