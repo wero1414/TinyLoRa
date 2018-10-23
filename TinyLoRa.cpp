@@ -204,7 +204,7 @@ void TinyLoRa::RFM_Send_Package(unsigned char *RFM_Tx_Package, unsigned char Pac
   RFM_Write(RegFrfLsb, 0xC0);
 #endif
 
-#ifdef FULLCH
+#ifdef MULTICH
   // change the channel of the RFM module
   // br: carrier freq split between 0x06, 0x07, 0x08
   RFM_Write(RegFrfMsb, pgm_read_byte(&(LoRa_Frequency[randomNum][0])));

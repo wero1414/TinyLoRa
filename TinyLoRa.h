@@ -18,13 +18,13 @@
 //#define AU915
 //#define AS920
 // Define fixed datarate
-//#define SF7BW125
+#define SF7BW125
 //#define SF12BW125
 //#define SF11BW125
 //#define SF10BW125
 //#define SF9BW125
 //#define SF8BW125
-#define SF7BW250
+//#define SF7BW250
 
 /* RFM Modes */
 #define MODE_SLEEP  0x00
