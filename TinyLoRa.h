@@ -2,7 +2,6 @@
 #define TINY_LORA_H
 
 #include <Arduino.h>
-#include <util/delay.h>
 #include <avr/pgmspace.h>
 
 // debugging, unset if you don't need this.
