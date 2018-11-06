@@ -1,58 +1,105 @@
+/*!
+ * @file TinyLoRa.h
+ *
+ * This is part of Adafruit's TinyLoRa library for the Arduino platform. It is
+ * designed specifically to work with the Adafruit Feather 32u4 RFM95 LoRa:
+ * https://www.adafruit.com/product/3078
+ *
+ * This library uses SPI to communicate, 4 pins (SCL, SDA, IRQ, SS)
+ * are required to interface with the HopeRF RFM95/96 breakout.
+ *
+ * Adafruit invests time and resources providing this open source code,
+ * please support Adafruit and open-source hardware by purchasing
+ * products from Adafruit!
+ *
+ * Copyright 2015, 2016 Ideetron B.V.
+ * Modified by Brent Rubell for Adafruit Industries.
+ *
+ *
+ * BSD license, all text here must be included in any redistribution.
+ *
+ */
+
 #ifndef TINY_LORA_H
 #define TINY_LORA_H
 
 #include <Arduino.h>
 #include <avr/pgmspace.h>
 
-// debugging, unset if you don't need this.
-//#define DEBUG
+// uncomment for debug output
+// #define DEBUG
 
-// Multi-Channel Package Sending (default)
-#define MULTICH
+/** RFM channel options */
+typedef enum rfm_channels
+{
+  CH0,
+  CH1,
+  CH2,
+  CH3,
+  CH4,
+  CH5,
+  CH6,
+  CH7,
+  MULTI,
+} rfm_channels_t;
 
-/* TTN Configuration */
-// Set TTN frequecy plan EU863, AU915, AS920, US902
-#define US902
-//#define EU863
-//#define AU915
-//#define AS920
-// Define fixed datarate
-#define SF7BW125
-//#define SF12BW125
-//#define SF11BW125
-//#define SF10BW125
-//#define SF9BW125
-//#define SF8BW125
-//#define SF7BW250
+/** RFM fixed datarate, dependent on region */
+typedef enum rfm_datarates
+{
+  SF7BW125,
+  SF7BW250,
+  SF8BW125,
+  SF9BW125,
+  SF10BW125,
+  SF11BW125,
+  SF12BW125,
+} rfm_datarates_t;
+
+/** Region configuration*/
+#define US902 ///< Used in USA, Canada and South America
+//#define EU863 ///< Used in Europe
+//#define AU915 ///< Used in Australia
+//#define AS920 ///< Used in Asia
 
 /* RFM Modes */
-#define MODE_SLEEP  0x00
-#define MODE_LORA   0x80
-#define MODE_STDBY  0x01
-#define MODE_TX     0x83
+#define MODE_SLEEP  0x00  ///<low-power mode
+#define MODE_LORA   0x80  ///<LoRa operating mode
+#define MODE_STDBY  0x01  ///<Osc. and baseband disabled
+#define MODE_TX     0x83  ///<Configures and transmits packet
 
 /* RFM Registers */
-#define REG_PA_CONFIG            0x09
-#define REG_PREAMBLE_MSB         0x20
-#define REG_PREAMBLE_LSB         0x21
-#define RegFrfMsb                0x06
-#define RegFrfMid                0x07
-#define RegFrfLsb                0x08
+#define REG_PA_CONFIG              0x09 ///<PA selection and Output Power control
+#define REG_PREAMBLE_MSB           0x20 ///<Preamble Length, MSB
+#define REG_PREAMBLE_LSB           0x21 ///<Preamble Length, LSB
+#define REG_FRF_MSB                0x06 ///<RF Carrier Frequency MSB
+#define REG_FRF_MID                0x07 ///<RF Carrier Frequency Intermediate
+#define REG_FRF_LSB                0x08 ///<RF Carrier Frequency LSB
+#define REG_FEI_LSB                0x1E ///<Info from Prev. Header
+#define REG_FEI_MSB                0x1D ///<Number of received bytes
+#define REG_MODEM_CONFIG           0x26 ///<Modem configuration register
 
-/* TinyLoRa Class */
+/**************************************************************************/
+/*! 
+    @brief  TinyLoRa Class
+*/
+/**************************************************************************/
 class TinyLoRa
 {
 	public:
-		uint8_t txrandomNum;
-		uint16_t frameCounter;
-		TinyLoRa(int8_t rfm_dio0, int8_t rfm_nss);
+		uint8_t txrandomNum;  ///<random number for AES
+		uint16_t frameCounter;  ///<frame counter
+    void setChannel(rfm_channels_t channel);
+    void setDatarate(rfm_datarates_t datarate);
+    TinyLoRa(int8_t rfm_dio0, int8_t rfm_nss);
 		void begin(void);
 		void sendData(unsigned char *Data, unsigned char Data_Length, unsigned int Frame_Counter_Tx);
 
 	private:
 		uint8_t randomNum;
 		int8_t _cs, _irq;
-		static const unsigned char LoRa_Frequency[8][3];
+    bool _isMultiChan;
+    unsigned char _rfmMSB, _rfmMID, _rfmLSB, _sf, _bw, _modemcfg;
+    static const unsigned char LoRa_Frequency[8][3];
 		static const unsigned char S_Table[16][16];
 		void RFM_Send_Package(unsigned char *RFM_Tx_Package, unsigned char Package_Length);
 		void RFM_Write(unsigned char RFM_Address, unsigned char RFM_Data);

@@ -1,25 +1,43 @@
-/******************************************************************************************
-* Copyright 2015, 2016 Ideetron B.V.
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Lesser General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Lesser General Public License for more details.
-*
-* You should have received a copy of the GNU Lesser General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-******************************************************************************************/
+/*!
+ * @file TinyLoRa.cpp
+ *
+ * @mainpage TinyLoRa RFM95/96W breakout driver
+ *
+ * @section intro_sec Introduction
+ *
+ * This is the documentation for Adafruit's Feather LoRa for the
+ * Arduino platform. It is designed specifically to work with the
+ * Adafruit Feather 32u4 LoRa: 
+ * This is the documentation for Adafruit's FXOS8700 driver for the
+ * Arduino platform.  It is designed specifically to work with the
+ * Adafruit FXOS8700 breakout: https://www.adafruit.com/product/3078
+ *
+ * This library uses SPI to communicate, 4 pins (SCL, SDA, IRQ, SS)
+ * are required to interface with the HopeRF RFM95/96 breakout.
+ *
+ * Adafruit invests time and resources providing this open source code,
+ * please support Adafruit and open-source hardware by purchasing
+ * products from Adafruit!
+ *
+ * @section dependencies Dependencies
+ *
+ * This library has no dependencies.
+ *
+ * @section author Author
+ *
+ * Written by Ideetron B.V., modified by Brent Rubell for Adafruit Industries.
+ *
+ * @section license License
+ *
+ * BSD license, all text here must be included in any redistribution.
+ *
+ */
 #include "TinyLoRa.h"
 #include <SPI.h>
 
-extern uint8_t NwkSkey[16];
-extern uint8_t AppSkey[16];
-extern uint8_t DevAddr[4];
+extern uint8_t NwkSkey[16]; ///< Network Session Key
+extern uint8_t AppSkey[16]; ///< Application Session Key
+extern uint8_t DevAddr[4]; ///< Device Address
 
 static SPISettings RFM_spisettings = SPISettings(4000000, MSBFIRST, SPI_MODE0);
 
@@ -30,7 +48,7 @@ static SPISettings RFM_spisettings = SPISettings(4000000, MSBFIRST, SPI_MODE0);
 */
 
 #ifdef AU915
-static const unsigned char PROGMEM TinyLoRa::LoRa_Frequency[8][3] = {
+const unsigned char PROGMEM TinyLoRa::LoRa_Frequency[8][3] = {
 	{ 0xE5, 0x33, 0x5A },	//Channel 0 916.800 MHz / 61.035 Hz = 15020890 = 0xE5335A
 	{ 0xE5, 0x40, 0x26 },	//Channel 2 917.000 MHz / 61.035 Hz = 15024166 = 0xE54026
 	{ 0xE5, 0x4C, 0xF3 },	//Channel 3 917.200 MHz / 61.035 Hz = 15027443 = 0xE54CF3
@@ -43,7 +61,7 @@ static const unsigned char PROGMEM TinyLoRa::LoRa_Frequency[8][3] = {
 #endif
 
 #ifdef EU863
-static const unsigned char PROGMEM TinyLoRa::LoRa_Frequency[8][3] = {
+const unsigned char PROGMEM TinyLoRa::LoRa_Frequency[8][3] = {
 	{ 0xD9, 0x06, 0x8B },	//Channel 0 868.100 MHz / 61.035 Hz = 14222987 = 0xD9068B
 	{ 0xD9, 0x13, 0x58 },	//Channel 1 868.300 MHz / 61.035 Hz = 14226264 = 0xD91358
 	{ 0xD9, 0x20, 0x24 },	//Channel 2 868.500 MHz / 61.035 Hz = 14229540 = 0xD92024
@@ -57,7 +75,7 @@ static const unsigned char PROGMEM TinyLoRa::LoRa_Frequency[8][3] = {
 #endif
 
 #ifdef US902
-static const unsigned char PROGMEM TinyLoRa::LoRa_Frequency[8][3] = {
+const unsigned char PROGMEM TinyLoRa::LoRa_Frequency[8][3] = {
 	{ 0xE1, 0xF9, 0xC0 },		//Channel 0 903.900 MHz / 61.035 Hz = 14809536 = 0xE1F9C0
 	{ 0xE2, 0x06, 0x8C },		//Channel 1 904.100 MHz / 61.035 Hz = 14812812 = 0xE2068C
 	{ 0xE2, 0x13, 0x59},		//Channel 2 904.300 MHz / 61.035 Hz = 14816089 = 0xE21359
@@ -70,7 +88,7 @@ static const unsigned char PROGMEM TinyLoRa::LoRa_Frequency[8][3] = {
 #endif
 
 #ifdef AS920
-static const unsigned char PROGMEM TinyLoRa::LoRa_Frequency[8][3] = {
+const unsigned char PROGMEM TinyLoRa::LoRa_Frequency[8][3] = {
 	{ 0xE6, 0xCC, 0xF4 },		//Channel 0 868.100 MHz / 61.035 Hz = 15125748 = 0xE6CCF4
 	{ 0xE6, 0xD9, 0xC0 },		//Channel 1 868.300 MHz / 61.035 Hz = 15129024 = 0xE6D9C0
 	{ 0xE6, 0x8C, 0xF3 },		//Channel 2 868.500 MHz / 61.035 Hz = 15109363 = 0xE68CF3
@@ -89,7 +107,7 @@ static const unsigned char PROGMEM TinyLoRa::LoRa_Frequency[8][3] = {
 *****************************************************************************************
 */
 
-static const unsigned char PROGMEM TinyLoRa::S_Table[16][16] = {
+const unsigned char PROGMEM TinyLoRa::S_Table[16][16] = {
 	  {0x63,0x7C,0x77,0x7B,0xF2,0x6B,0x6F,0xC5,0x30,0x01,0x67,0x2B,0xFE,0xD7,0xAB,0x76},
 	  {0xCA,0x82,0xC9,0x7D,0xFA,0x59,0x47,0xF0,0xAD,0xD4,0xA2,0xAF,0x9C,0xA4,0x72,0xC0},
 	  {0xB7,0xFD,0x93,0x26,0x36,0x3F,0xF7,0xCC,0x34,0xA5,0xE5,0xF1,0x71,0xD8,0x31,0x15},
@@ -108,17 +126,154 @@ static const unsigned char PROGMEM TinyLoRa::S_Table[16][16] = {
 	  {0x8C,0xA1,0x89,0x0D,0xBF,0xE6,0x42,0x68,0x41,0x99,0x2D,0x0F,0xB0,0x54,0xBB,0x16}
 	};
 
-/*
-*****************************************************************************************
-* Description: Function used to initialize the RFM module on startup
-*****************************************************************************************
-*/
+/***************************************************************************
+ CONSTRUCTORS
+ ***************************************************************************/
 
-TinyLoRa::TinyLoRa(int8_t rfm__irq, int8_t rfm_nss) {
-  _irq = rfm__irq;
+/**************************************************************************/
+/*! 
+    @brief Sets the RFM datarate
+    @param datarate Bandwidth and Frequency plan.
+*/
+/**************************************************************************/
+void TinyLoRa::setDatarate(rfm_datarates_t datarate) {
+  _sf, _bw, _modemcfg = 0;
+  switch(datarate) {
+    case SF7BW125:
+      _sf = 0x74;
+      _bw = 0x72;
+      _modemcfg = 0x04;
+      break;
+    case SF7BW250:
+      _sf = 0x74;
+      _bw = 0x82;
+      _modemcfg = 0x04;
+      break;
+    case SF8BW125:
+      _sf = 0x84;
+      _bw = 0x72;
+      _modemcfg = 0x04;
+      break;
+    case SF9BW125:
+      _sf = 0x94;
+      _bw = 0x72;
+      _modemcfg = 0x04;
+      break;
+    case SF10BW125:
+      _sf = 0xA4;
+      _bw = 0x72;
+      _modemcfg = 0x04;
+      break;
+    case SF11BW125:
+      _sf = 0xB4;
+      _bw = 0x72;
+      _modemcfg = 0x0C;
+      break;
+    case SF12BW125:
+      _sf = 0xC4;
+      _bw = 0x72;
+      _modemcfg = 0x0C;
+      break;
+    default:
+      _sf = 0x74;
+      _bw = 0x72;
+      _modemcfg = 0x04;
+      break;
+  }
+}
+
+/**************************************************************************/
+/*! 
+    @brief Sets the RFM channel.
+    @param channel Which channel to send data
+*/
+/**************************************************************************/
+void TinyLoRa::setChannel(rfm_channels_t channel) {
+  _rfmMSB, _rfmLSB, _rfmMID = 0;
+  switch (channel)
+  {
+    case CH0:
+      _rfmLSB = pgm_read_byte(&(LoRa_Frequency[0][2]));
+      _rfmMID = pgm_read_byte(&(LoRa_Frequency[0][1]));
+      _rfmMSB = pgm_read_byte(&(LoRa_Frequency[0][0]));
+      _isMultiChan = 0;
+      break;
+    case CH1:
+      _rfmLSB = pgm_read_byte(&(LoRa_Frequency[1][2]));
+      _rfmMID = pgm_read_byte(&(LoRa_Frequency[1][1]));
+      _rfmMSB = pgm_read_byte(&(LoRa_Frequency[1][0]));
+      _isMultiChan = 0;
+      break;
+    case CH2:
+      _rfmLSB = pgm_read_byte(&(LoRa_Frequency[2][2]));
+      _rfmMID = pgm_read_byte(&(LoRa_Frequency[2][1]));
+      _rfmMSB = pgm_read_byte(&(LoRa_Frequency[2][0]));
+      _isMultiChan = 0;
+      break;
+    case CH3:
+      _rfmLSB = pgm_read_byte(&(LoRa_Frequency[3][2]));
+      _rfmMID = pgm_read_byte(&(LoRa_Frequency[3][1]));
+      _rfmMSB = pgm_read_byte(&(LoRa_Frequency[3][0]));
+      _isMultiChan = 0;
+      break;
+    case CH4:
+      _rfmLSB = pgm_read_byte(&(LoRa_Frequency[4][2]));
+      _rfmMID = pgm_read_byte(&(LoRa_Frequency[4][1]));
+      _rfmMSB = pgm_read_byte(&(LoRa_Frequency[4][0]));
+      _isMultiChan = 0;
+      break;
+    case CH5:
+      _rfmLSB = pgm_read_byte(&(LoRa_Frequency[5][2]));
+      _rfmMID = pgm_read_byte(&(LoRa_Frequency[5][1]));
+      _rfmMSB = pgm_read_byte(&(LoRa_Frequency[5][0]));
+      _isMultiChan = 0;
+      break;
+    case CH6:
+      _rfmLSB = pgm_read_byte(&(LoRa_Frequency[6][2]));
+      _rfmMID = pgm_read_byte(&(LoRa_Frequency[6][1]));
+      _rfmMSB = pgm_read_byte(&(LoRa_Frequency[6][0]));
+      _isMultiChan = 0;
+      break;
+    case CH7:
+      _rfmLSB = pgm_read_byte(&(LoRa_Frequency[7][2]));
+      _rfmMID = pgm_read_byte(&(LoRa_Frequency[7][1]));
+      _rfmMSB = pgm_read_byte(&(LoRa_Frequency[7][0]));
+      _isMultiChan = 0;
+      break;
+    case MULTI:
+      _isMultiChan = 1;
+      break;
+    default:
+      _isMultiChan = 1;
+      break;
+  }
+}
+
+/**************************************************************************/
+/*!
+    @brief  Instanciates a new TinyLoRa class, including assigning
+            irq and cs pins to the RFM breakout.
+    @param    rfm_irq
+              The RFM module's interrupt pin (rfm_nss).
+    @param    rfm_nss
+              The RFM module's slave select pin (rfm_nss).
+*/
+/**************************************************************************/
+TinyLoRa::TinyLoRa(int8_t rfm_irq, int8_t rfm_nss) {
+  _irq = rfm_irq;
   _cs = rfm_nss;
 }
 
+/***************************************************************************
+ PUBLIC FUNCTIONS
+ ***************************************************************************/
+
+ /**************************************************************************/
+ /*!
+     @brief  Initializes the RFM, including configuring SPI, configuring
+             the frameCounter and txrandomNum. 
+ */
+ /**************************************************************************/
 void TinyLoRa::begin() 
 {
 
@@ -175,14 +330,15 @@ void TinyLoRa::begin()
 
 }
 
-/*
-*****************************************************************************************
-* Description : Function for sending a package with the RFM
-*
-* Arguments   : *RFM_Tx_Package Pointer to arry with data to be send
-*               Package_Length  Length of the package to send
-*****************************************************************************************
+/**************************************************************************/
+/*!
+    @brief  Sends a package with the RFM module.
+    @param    *RFM_Tx_Package
+              Pointer to array containing data to be sent.
+    @param    Package_Length
+              Length of the package to be sent.
 */
+/**************************************************************************/
 void TinyLoRa::RFM_Send_Package(unsigned char *RFM_Tx_Package, unsigned char Package_Length)
 {
   unsigned char i;
@@ -196,63 +352,21 @@ void TinyLoRa::RFM_Send_Package(unsigned char *RFM_Tx_Package, unsigned char Pac
   //Switch _irq to TxDone
   RFM_Write(0x40,0x40);
 
-// Single Channel Send on CH6, 903.9MHz
-// 0xE1, 0xF9, 0xC0
-#ifdef SGLCH
-  RFM_Write(RegFrfMsb, 0xE1);
-  RFM_Write(RegFrfMid, 0xF9);
-  RFM_Write(RegFrfLsb, 0xC0);
-#endif
+  // select rfm channel
+  if (_isMultiChan == 1) {
+    RFM_Write(REG_FRF_MSB, pgm_read_byte(&(LoRa_Frequency[randomNum][0])));
+    RFM_Write(REG_FRF_MID, pgm_read_byte(&(LoRa_Frequency[randomNum][1])));
+    RFM_Write(REG_FRF_LSB, pgm_read_byte(&(LoRa_Frequency[randomNum][2])));
+  } else {
+    RFM_Write(REG_FRF_MSB, _rfmMSB);
+    RFM_Write(REG_FRF_MID, _rfmMID);
+    RFM_Write(REG_FRF_LSB, _rfmLSB);
+  }
 
-#ifdef MULTICH
-  // change the channel of the RFM module
-  // br: carrier freq split between 0x06, 0x07, 0x08
-  RFM_Write(RegFrfMsb, pgm_read_byte(&(LoRa_Frequency[randomNum][0])));
-  RFM_Write(RegFrfMid, pgm_read_byte(&(LoRa_Frequency[randomNum][1])));
-  RFM_Write(RegFrfLsb, pgm_read_byte(&(LoRa_Frequency[randomNum][2])));
-#endif
-
-#ifdef SF12BW125         //SF12 BW 125 kHz
-  RFM_Write(0x1E, 0xC4); //SF12 CRC On
-  RFM_Write(0x1D, 0x72); //125 kHz 4/5 coding rate explicit header mode
-  RFM_Write(0x26, 0x0C); //Low datarate optimization on AGC auto on
-#endif
-
-#ifdef SF11BW125         //SF11 BW 125 kHz
-  RFM_Write(0x1E, 0xB4); //SF11 CRC On
-  RFM_Write(0x1D, 0x72); //125 kHz 4/5 coding rate explicit header mode
-  RFM_Write(0x26, 0x0C); //Low datarate optimization on AGC auto on
-#endif
-
-#ifdef SF10BW125         //SF10 BW 125 kHz
-  RFM_Write(0x1E, 0xA4); //SF10 CRC On
-  RFM_Write(0x1D, 0x72); //125 kHz 4/5 coding rate explicit header mode
-  RFM_Write(0x26, 0x04); //Low datarate optimization off AGC auto on
-#endif
-
-#ifdef SF9BW125          //SF9 BW 125 kHz
-  RFM_Write(0x1E, 0x94); //SF9 CRC On
-  RFM_Write(0x1D, 0x72); //125 kHz 4/5 coding rate explicit header mode
-  RFM_Write(0x26, 0x04); //Low datarate optimization off AGC auto on
-#endif
-
-#ifdef SF8BW125          //SF8 BW 125 kHz
-  RFM_Write(0x1E, 0x84); //SF8 CRC On
-  RFM_Write(0x1D, 0x72); //125 kHz 4/5 coding rate explicit header mode
-  RFM_Write(0x26, 0x04); //Low datarate optimization off AGC auto on
-#endif
-
-#ifdef SF7BW125          //SF7 BW 125 kHz
-  RFM_Write(0x1E, 0x74); //SF7 CRC On
-  RFM_Write(0x1D, 0x72); //125 kHz 4/5 coding rate explicit header mode
-  RFM_Write(0x26, 0x04); //Low datarate optimization off AGC auto on
-#endif
-
-#ifdef SF7BW250          //SF7 BW 250kHz
-  RFM_Write(0x1E, 0x74); //SF7 CRC On
-  RFM_Write(0x1D, 0x82); //250 kHz 4/5 coding rate explicit header mode
-  RFM_Write(0x26, 0x04); //Low datarate optimization off AGC auto on
-#endif 
+  /* Set RFM Datarate */
+  RFM_Write(REG_FEI_LSB, _sf);
+  RFM_Write(REG_FEI_MSB, _bw);
+  RFM_Write(REG_MODEM_CONFIG, _modemcfg);
 
   //Set payload length to the right length
   RFM_Write(0x22,Package_Length);
@@ -278,14 +392,15 @@ void TinyLoRa::RFM_Send_Package(unsigned char *RFM_Tx_Package, unsigned char Pac
   RFM_Write(0x01,MODE_SLEEP);
 }
 
-/*
-*****************************************************************************************
-* Description : Funtion that writes a register from the RFM
-*
-* Arguments   : RFM_Address Address of register to be written
-*         RFM_Data    Data to be written
-*****************************************************************************************
+/**************************************************************************/
+/*!
+    @brief    Function which writes to a register from the RFM.
+    @param    RFM_Address
+              An address of the register to be written.
+    @param    RFM_Data
+              Data to be written to the register.
 */
+/**************************************************************************/
 void TinyLoRa::RFM_Write(unsigned char RFM_Address, unsigned char RFM_Data) 
 {
   // br: SPI Transfer Debug
@@ -309,15 +424,18 @@ void TinyLoRa::RFM_Write(unsigned char RFM_Address, unsigned char RFM_Data)
   //Set NSS pin High to end communication
   digitalWrite(_cs, HIGH);
 }
-/*
-*****************************************************************************************
-* Description : Function contstructs a LoRaWAN package and sends it
-*
-* Arguments   : *Data pointer to the array of data that will be transmitted
-*               Data_Length nuber of bytes to be transmitted
-*               Frame_Counter_Up  Frame counter of upstream frames
-*****************************************************************************************
+
+/**************************************************************************/
+/*!
+    @brief    Function to assemble and send a LoRaWAN package.
+    @param    *Data
+              Pointer to the array of data to be transmitted.
+    @param    Frame_Counter_Tx
+              Frame counter for transfer frames.
+    @param    Data_Length
+              Length of data to be sent.
 */
+/**************************************************************************/
 void TinyLoRa::sendData(unsigned char *Data, unsigned char Data_Length, unsigned int Frame_Counter_Tx)
 {
   
@@ -383,18 +501,25 @@ void TinyLoRa::sendData(unsigned char *Data, unsigned char Data_Length, unsigned
  
   //Send Package
   RFM_Send_Package(RFM_Data, RFM_Package_Length);
-  Serial.println("sent package!");
+  #ifdef DEBUG
+    Serial.println("sent package!");
+  #endif
 }
-/*
-*****************************************************************************************
-* Description : Function used to encrypt and decrypt the data in a LoRaWAN data message
-*
-* Arguments   : *Data pointer to the data to de/encrypt
-*				Data_Length nuber of bytes to be transmitted
-*               Frame_Counter_Up  Frame counter of upstream frames
-*				Direction of msg is up
-*****************************************************************************************
+
+/**************************************************************************/
+/*!
+    @brief    Function used to encrypt and decrypt the data in a LoRaWAN
+              data packet.
+    @param    *Data
+              Pointer to the data to decrypt or encrypt.
+    @param    Data_Length
+              Number of bytes to be transmitted.
+    @param    Frame_Counter
+              Counts upstream frames.
+    @param    Direction
+              Direction of message (is up).
 */
+/**************************************************************************/
 void TinyLoRa::Encrypt_Payload(unsigned char *Data, unsigned char Data_Length, unsigned int Frame_Counter, unsigned char Direction)
 {
   unsigned char i = 0x00;
@@ -464,17 +589,22 @@ void TinyLoRa::Encrypt_Payload(unsigned char *Data, unsigned char Data_Length, u
     }
   }
 }
-/*
-*****************************************************************************************
-* Description : Function used to calculate the MIC of data
-*
-* Arguments   : *Data pointer to the data to de/encrypt
-*				Data_Length nuber of bytes to be transmitted
-*				MIC Array of 4 bytes
-*				Frame_Counter_Up  Frame counter of upstream frames
-*				Direction of msg is up
-*****************************************************************************************
+
+/**************************************************************************/
+/*!
+    @brief    Function used to calculate the validity of data messages.
+    @param    *Data
+              Pointer to the data to decrypt or encrypt.
+    @param    Data_Length
+              Number of bytes to be transmitted.
+    @param    *Final_Mic
+              Pointer to MIC array (4 bytes).
+    @param    Frame_Counter
+              Frame counter of upstream frames.
+    @param    Direction
+              Direction of message (is up?).
 */
+/**************************************************************************/
 void TinyLoRa::Calculate_MIC(unsigned char *Data, unsigned char *Final_MIC, unsigned char Data_Length, unsigned int Frame_Counter, unsigned char Direction)
 {
   unsigned char i;
@@ -639,14 +769,16 @@ void TinyLoRa::Calculate_MIC(unsigned char *Data, unsigned char *Final_MIC, unsi
   txrandomNum = Final_MIC[2] & 0x07;
 
 }
-/*
-*****************************************************************************************
-* Description : Function used to generate keys for the MIC calculation
-*
-* Arguments   : *K1 pointer to Key1
-*				*K2 pointer ot Key2
-*****************************************************************************************
+
+/**************************************************************************/
+/*!
+    @brief    Function used to generate keys for the MIC calculation.
+    @param    *K1
+              Pointer to Key1.
+    @param    *K2
+              Pointer to Key2.
 */
+/**************************************************************************/
 void TinyLoRa::Generate_Keys(unsigned char *K1, unsigned char *K2)
 {
   unsigned char i;
@@ -731,6 +863,15 @@ void TinyLoRa::Shift_Left(unsigned char *Data)
   }
 }
 
+/**************************************************************************/
+/*!
+    @brief    Function to XOR two character arrays.
+    @param    *New_Data
+              A pointer to the calculated data.
+    @param    *Old_Data
+              A pointer to the data to be xor'd.
+*/
+/**************************************************************************/
 void TinyLoRa::XOR(unsigned char *New_Data,unsigned char *Old_Data)
 {
   unsigned char i;
@@ -740,12 +881,16 @@ void TinyLoRa::XOR(unsigned char *New_Data,unsigned char *Old_Data)
     New_Data[i] = New_Data[i] ^ Old_Data[i];
   }
 }
-/*
-*****************************************************************************************
-* Title         : AES_Encrypt
-* Description  : 
-*****************************************************************************************
+
+/**************************************************************************/
+/*!
+    @brief    Function used to perform AES encryption.
+    @param    *Data
+              Pointer to the data to decrypt or encrypt.
+    @param    *Key
+              Pointer to AES encryption key.
 */
+/**************************************************************************/
 void TinyLoRa::AES_Encrypt(unsigned char *Data, unsigned char *Key)
 {
   unsigned char Row, Column, Round = 0;
@@ -818,15 +963,17 @@ void TinyLoRa::AES_Encrypt(unsigned char *Data, unsigned char *Key)
       Data[Row + (Column << 2)] = State[Row][Column];
     }
   }
-} // AES_Encrypt
+}
 
-
-/*
-*****************************************************************************************
-* Title         : AES_Add_Round_Key
-* Description : 
-*****************************************************************************************
+/**************************************************************************/
+/*!
+    @brief    Function performs AES AddRoundKey step.
+    @param    *Round_Key
+              Pointer to the round subkey.
+    @param    *State
+              Pointer to bytes of the states-to-be-xor'd.
 */
+/**************************************************************************/
 void TinyLoRa::AES_Add_Round_Key(unsigned char *Round_Key, unsigned char (*State)[4])
 {
   unsigned char Row, Collum;
@@ -838,15 +985,15 @@ void TinyLoRa::AES_Add_Round_Key(unsigned char *Round_Key, unsigned char (*State
       State[Row][Collum] ^= Round_Key[Row + (Collum << 2)];
     }
   }
-} // AES_Add_Round_Key
+}
 
-
-/*
-*****************************************************************************************
-* Title         : AES_Sub_Byte
-* Description : 
-*****************************************************************************************
+/**************************************************************************/
+/*!
+    @brief    Function performs AES SubBytes step.
+    @param    Byte
+              Individual byte, from state array.
 */
+/**************************************************************************/
 unsigned char TinyLoRa::AES_Sub_Byte(unsigned char Byte)
 {
 //  unsigned char S_Row,S_Collum;
@@ -858,15 +1005,15 @@ unsigned char TinyLoRa::AES_Sub_Byte(unsigned char Byte)
 
   //return S_Table [ ((Byte >> 4) & 0x0F) ] [ ((Byte >> 0) & 0x0F) ]; // original
   return pgm_read_byte(&(S_Table [((Byte >> 4) & 0x0F)] [((Byte >> 0) & 0x0F)]));
-} //    AES_Sub_Byte
+}
 
-
-/*
-*****************************************************************************************
-* Title         : AES_Shift_Rows
-* Description : 
-*****************************************************************************************
+/**************************************************************************/
+/*!
+    @brief    Function performs AES ShiftRows step.
+    @param    *State
+              Pointer to state array.
 */
+/**************************************************************************/
 void TinyLoRa::AES_Shift_Rows(unsigned char (*State)[4])
 {
   unsigned char Buffer;
@@ -893,12 +1040,13 @@ void TinyLoRa::AES_Shift_Rows(unsigned char (*State)[4])
   State[3][0] = Buffer;
 }
 
-/*
-*****************************************************************************************
-* Title         : AES_Mix_Collums
-* Description : 
-*****************************************************************************************
+/**************************************************************************/
+/*!
+    @brief    Function performs AES MixColumns step.
+    @param    *State
+              Pointer to state array.
 */
+/**************************************************************************/
 void TinyLoRa::AES_Mix_Collums(unsigned char (*State)[4])
 {
   unsigned char Row,Collum;
@@ -927,12 +1075,15 @@ void TinyLoRa::AES_Mix_Collums(unsigned char (*State)[4])
 
 
 
-/*
-*****************************************************************************************
-* Title         : AES_Calculate_Round_Key
-* Description : 
-*****************************************************************************************
+/**************************************************************************/
+/*!
+    @brief    Function performs AES Round Key Calculation.
+    @param    Round
+              Number of rounds to perform (depends on key size).
+    @param    Round_Key
+              Pointer to round key.
 */
+/**************************************************************************/
 void TinyLoRa::AES_Calculate_Round_Key(unsigned char Round, unsigned char *Round_Key)
 {
   unsigned char i, j, b, Rcon;
