@@ -12,14 +12,17 @@
 #include <TinyLoRa.h>
 #include <SPI.h>
 
+// Visit your thethingsnetwork.org device console
+// to create an account, or if you need your session keys.
+
 // Network Session Key (MSB)
-uint8_t NwkSkey[16] = { FILL_THIS_IN };
+uint8_t NwkSkey[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 // Application Session Key (MSB)
-uint8_t AppSkey[16] = { FILL_THIS_IN };
+uint8_t AppSkey[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 // Device Address (MSB)
-uint8_t DevAddr[4] = { FILL_THIS_IN };
+uint8_t DevAddr[4] = { 0x00, 0x00, 0x00, 0x00 };
 
 /************************** Example Begins Here ***********************************/
 // Data Packet to Send to TTN
