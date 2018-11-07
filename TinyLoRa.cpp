@@ -7,10 +7,7 @@
  *
  * This is the documentation for Adafruit's Feather LoRa for the
  * Arduino platform. It is designed specifically to work with the
- * Adafruit Feather 32u4 LoRa: 
- * This is the documentation for Adafruit's FXOS8700 driver for the
- * Arduino platform.  It is designed specifically to work with the
- * Adafruit FXOS8700 breakout: https://www.adafruit.com/product/3078
+ * Adafruit Feather 32u4 LoRa.
  *
  * This library uses SPI to communicate, 4 pins (SCL, SDA, IRQ, SS)
  * are required to interface with the HopeRF RFM95/96 breakout.
@@ -456,9 +453,15 @@ void TinyLoRa::sendData(unsigned char *Data, unsigned char Data_Length, unsigned
   unsigned char Frame_Control = 0x00;
   unsigned char Frame_Port = 0x01;
 
-  //Encrypt the data
-  Encrypt_Payload(Data, Data_Length, Frame_Counter_Tx, Direction);
+  //make a copy of Data
+  unsigned char tmpData[Data_Length];
+  for (int i = 0; i < Data_Length; i++)
+  {
+    tmpData[i] = Data[i];
+  }
 
+  //Encrypt Data (data argument is overwritten in this function)
+  Encrypt_Payload(tmpData, Data_Length, Frame_Counter_Tx, Direction);
   
   //Build the Radio Package
   RFM_Data[0] = Mac_Header;
@@ -477,7 +480,7 @@ void TinyLoRa::sendData(unsigned char *Data, unsigned char Data_Length, unsigned
   //Load Data
   for(i = 0; i < Data_Length; i++)
   {
-    RFM_Data[RFM_Package_Length + i] = Data[i];
+    RFM_Data[RFM_Package_Length + i] = tmpData[i];
   }
 
   //Add data Lenth to package length

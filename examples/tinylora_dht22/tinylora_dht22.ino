@@ -1,4 +1,4 @@
-// Hello LoRa Single Channel - ABP TTN Single Channel Packet Sender
+// TinyLoRa DHT22 - ABP TTN Packet Sender (Multi-Channel)
 // Tutorial Link: https://learn.adafruit.com/the-things-network-for-feather/using-a-feather-32u4
 //
 // Adafruit invests time and resources providing this open source code.
@@ -11,6 +11,7 @@
 /************************** Configuration ***********************************/
 #include <TinyLoRa.h>
 #include <SPI.h>
+#include "DHT.h"
 
 // Visit your thethingsnetwork.org device console
 // to create an account, or if you need your session keys.
@@ -26,15 +27,22 @@ uint8_t DevAddr[4] = { 0x00, 0x00, 0x00, 0x00 };
 
 /************************** Example Begins Here ***********************************/
 // Data Packet to Send to TTN
-unsigned char loraData[11] = {"hello LoRa"};
+unsigned char loraData[4];
 
 // How many times data transfer should occur, in seconds
 const unsigned int sendInterval = 30;
 
-// Pinout for Feather 32u4 LoRa
+// Pinout for Adafruit Feather 32u4 LoRa
 TinyLoRa lora = TinyLoRa(7, 8);
 
-// Pinout for Feather M0 LoRa
+// Pinout for Adafruit Feather M0 LoRa
+//TinyLoRa lora = TinyLoRa(3, 8);
+
+// pin the DHT22 is connected to
+#define DHTPIN 10
+DHT dht(DHTPIN, DHT22);
+
+// Pinout for Adafruit Feather M0 LoRa
 //TinyLoRa lora = TinyLoRa(3, 8);
 
 void setup()
@@ -48,15 +56,49 @@ void setup()
   
   // Initialize LoRa
   Serial.println("Starting LoRa...");
-  // define channel to send data on
-  lora.setChannel(CH2);
+  // define multi-channel sending
+  lora.setChannel(MULTI);
   // set datarate
   lora.setDatarate(SF7BW125);
   lora.begin();
+
+  // Initialize DHT
+  dht.begin();
 }
 
 void loop()
 {
+   // Reading temperature or humidity takes about 250 milliseconds!
+  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+  float h = dht.readHumidity();
+  // Read temperature as Celsius (the default)
+  float t = dht.readTemperature();
+
+  Serial.print("Humidity: ");
+  Serial.print(h);
+  Serial.print(" %\t");
+  Serial.print("Temperature: ");
+  Serial.print(t);
+  Serial.println("");
+  
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(h) || isnan(t)) {
+    Serial.println("Failed to read from DHT sensor!");
+    return;
+  }
+
+  // encode float as int
+  int16_t tempInt = round(t * 100);
+  int16_t humidInt = round(h * 100);
+
+  // encode int as bytes
+  //byte payload[2];
+  loraData[0] = highByte(tempInt);
+  loraData[1] = lowByte(tempInt);
+  
+  loraData[2] = highByte(humidInt);
+  loraData[3] = lowByte(humidInt);
+  
   Serial.println("Sending LoRa Data...");
   lora.sendData(loraData, sizeof(loraData), lora.frameCounter);
   Serial.print("Frame Counter: ");Serial.println(lora.frameCounter);

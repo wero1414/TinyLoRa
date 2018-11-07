@@ -40,9 +40,9 @@ TinyLoRa lora = TinyLoRa(7, 8);
 void setup()
 {
   delay(2000);
-  while (! Serial);
   Serial.begin(9600);
- 
+  while (! Serial);
+  
   // Initialize pin LED_BUILTIN as an output
   pinMode(LED_BUILTIN, OUTPUT);
   
