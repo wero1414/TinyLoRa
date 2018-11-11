@@ -440,6 +440,33 @@ void TinyLoRa::RFM_Write(unsigned char RFM_Address, unsigned char RFM_Data)
 
 /**************************************************************************/
 /*!
+    @brief    Funtion that reads a register from the RFM
+    @param    RFM_Address
+              An address of the register to be read.
+*/
+/**************************************************************************/
+uint8_t TinyLoRa::RFM_Read(uint8_t RFM_Address) {
+    
+    SPI.beginTransaction(RFM_spisettings);
+    
+    digitalWrite(_cs, LOW);
+    
+    SPI.transfer(addr & 0x7F);
+    
+    uint8_t RFM_Data = SPI.transfer(0x00);
+    
+    digitalWrite(_cs, HIGH);
+      // br: SPI Transfer Debug
+    #ifdef DEBUG
+      Serial.print("SPI Read ADDR: ");
+      Serial.print(RFM_Address, HEX);
+      Serial.print(" DATA: ");
+      Serial.println(RFM_Data, HEX);
+    #endif
+    return RFM_Data;
+}
+/**************************************************************************/
+/*!
     @brief    Function to assemble and send a LoRaWAN package.
     @param    *Data
               Pointer to the array of data to be transmitted.
