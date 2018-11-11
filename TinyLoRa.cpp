@@ -511,6 +511,99 @@ void TinyLoRa::sendData(unsigned char *Data, unsigned char Data_Length, unsigned
 
 /**************************************************************************/
 /*!
+    @brief    Function to use the interrupt pin
+*/
+/**************************************************************************/
+void TinyLoRa::onDio0Rise()
+{
+  TinyLoRa.handleDio0Rise();
+}
+
+void LoRaClass::handleDio0Rise()
+{
+  int irqFlags = readRegister(REG_IRQ_FLAGS);
+
+  // clear IRQ's
+  writeRegister(REG_IRQ_FLAGS, irqFlags);
+
+  if ((irqFlags & IRQ_PAYLOAD_CRC_ERROR_MASK) == 0) {
+    // received a packet
+    _packetIndex = 0;
+
+    // read packet length
+    int packetLength = _implicitHeaderMode ? readRegister(REG_PAYLOAD_LENGTH) : readRegister(REG_RX_NB_BYTES);
+
+    // set FIFO address to current RX address
+    writeRegister(REG_FIFO_ADDR_PTR, readRegister(REG_FIFO_RX_CURRENT_ADDR));
+
+    if (_onReceive) {
+      _onReceive(packetLength);
+    }
+
+    // reset FIFO address
+    writeRegister(REG_FIFO_ADDR_PTR, 0);
+  }
+}
+
+void TinyLoRa::onReceive(void(*callback)(int))
+{
+  _onReceive = callback;
+
+  if (callback) {
+    pinMode(_irq, INPUT);
+
+    writeRegister(REG_DIO_MAPPING_1, 0x00);
+#ifdef SPI_HAS_NOTUSINGINTERRUPT
+    SPI.usingInterrupt(digitalPinToInterrupt(_irq));
+#endif
+    attachInterrupt(digitalPinToInterrupt(_irq), LoRaClass::onDio0Rise, RISING);
+  } else {
+    detachInterrupt(digitalPinToInterrupt(_irq));
+#ifdef SPI_HAS_NOTUSINGINTERRUPT
+    SPI.notUsingInterrupt(digitalPinToInterrupt(_irq));
+#endif
+  }
+}
+
+/**************************************************************************/
+/*!
+    @brief    Function to switch RFM to continuous receive mode, 
+              used for Class C 
+*/
+/**************************************************************************/
+void TinyLoRa::RFM_Continuous_Receive(void)
+{
+  attachInterrupt(digitalPinToInterrupt(_irq), TinyLoRa::onDio0Rise, RISING);
+  //Clear all interrupts
+  //RFM_Write(0x12, 0xFF);
+  //Change DIO 0 back to RxDone
+  RFM_Write(0x40,0x00);
+
+  //Invert IQ Back
+  RFM_Write(0x33,0x67);
+  RFM_Write(0x3B,0x19);
+  
+  //Change Datarate
+  RFM_Write(0x1E,0xA4); //SF10 CRC On
+  RFM_Write(0x1D,0x72); //125 kHz 4/5 coding rate explicit header mode
+  RFM_Write(0x26,0x04); //Low datarate optimization off AGC auto on
+
+  //Set Hop frequency Period to 0
+  RFM_Write(0x24,0x00);
+  
+  //Set carrair frequency ()
+  // 923.300 Mhz / 61.035 Hz = 15127386 = 0xE6D35A . 
+  RFM_Write(0x06,0xE6);
+  RFM_Write(0x07,0xD3);
+  RFM_Write(0x08,0x5A);
+
+  //Switch to continuous receive
+  //Set operation mode to Rx continuous
+  RFM_Write(0x01,0x85);  
+
+}
+/**************************************************************************/
+/*!
     @brief    Function used to encrypt and decrypt the data in a LoRaWAN
               data packet.
     @param    *Data
