@@ -460,7 +460,7 @@ uint8_t TinyLoRa::RFM_Read(uint8_t RFM_Address) {
     
     digitalWrite(_cs, LOW);
     
-    SPI.transfer(addr & 0x7F);
+    SPI.transfer(RFM_Address & 0x7F);
     
     uint8_t RFM_Data = SPI.transfer(0x00);
     
