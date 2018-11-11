@@ -299,6 +299,15 @@ void TinyLoRa::begin()
   // RFM95 _irq as input
   pinMode(_irq, OUTPUT);
 
+  uint8_t ver = RFM_Read(0x42);
+  if(ver!=18){
+    Serial.println("> Error detecting RFM95");
+    Serial.println("> Check your radio");
+    while(true);
+  }
+
+  Serial.println("> RFM95 detected ");
+
   //Switch RFM to sleep
   RFM_Write(0x01,MODE_SLEEP);
 
