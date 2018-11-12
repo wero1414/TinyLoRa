@@ -47,12 +47,18 @@ void setup()
   pinMode(LED_BUILTIN, OUTPUT);
   
   // Initialize LoRa
-  Serial.println("Starting LoRa...");
+  Serial.print("Starting LoRa...");
   // define multi-channel sending
   lora.setChannel(MULTI);
   // set datarate
   lora.setDatarate(SF7BW125);
-  lora.begin();
+  if(!lora.begin())
+  {
+    Serial.println("Failed");
+    Serial.println("Check your radio");
+    while(true);
+  }
+  Serial.println("OK");
 }
 
 void loop()
