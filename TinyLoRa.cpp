@@ -271,7 +271,7 @@ TinyLoRa::TinyLoRa(int8_t rfm_irq, int8_t rfm_nss) {
              the frameCounter and txrandomNum. 
  */
  /**************************************************************************/
-void TinyLoRa::begin() 
+bool TinyLoRa::begin() 
 {
 
   // start and configure SPI
@@ -285,13 +285,9 @@ void TinyLoRa::begin()
 
   uint8_t ver = RFM_Read(0x42);
   if(ver!=18){
-    Serial.println("> Error detecting RFM95");
-    Serial.println("> Check your radio");
-    while(true);
+    return 0;
   }
-
-  Serial.println("> RFM95 detected ");
-
+  
   //Switch RFM to sleep
   RFM_Write(0x01,MODE_SLEEP);
 
@@ -330,10 +326,7 @@ void TinyLoRa::begin()
 
   // init tx random number for first use
   uint8_t txrandomNum = 0x00;
-  #ifdef DEBUG
-    Serial.println("> RFM module initialized"); 
-  #endif
-
+  return 1;
 }
 
 /**************************************************************************/

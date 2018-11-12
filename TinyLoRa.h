@@ -91,7 +91,7 @@ class TinyLoRa
     void setChannel(rfm_channels_t channel);
     void setDatarate(rfm_datarates_t datarate);
     TinyLoRa(int8_t rfm_dio0, int8_t rfm_nss);
-		void begin(void);
+		bool begin(void);
 		void sendData(unsigned char *Data, unsigned char Data_Length, unsigned int Frame_Counter_Tx);
 
 	private:
