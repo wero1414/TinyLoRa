@@ -285,6 +285,7 @@ TinyLoRa::TinyLoRa(int8_t rfm_irq, int8_t rfm_nss) {
  /*!
      @brief  Initializes the RFM, including configuring SPI, configuring
              the frameCounter and txrandomNum. 
+     @return True if the RFM has been initialized
  */
  /**************************************************************************/
 bool TinyLoRa::begin() 
@@ -445,6 +446,7 @@ void TinyLoRa::RFM_Write(unsigned char RFM_Address, unsigned char RFM_Data)
     @brief    Funtion that reads a register from the RFM
     @param    RFM_Address
               An address of the register to be read.
+    @return   Value exchaged in SPI transaction
 */
 /**************************************************************************/
 uint8_t TinyLoRa::RFM_Read(uint8_t RFM_Address) {
