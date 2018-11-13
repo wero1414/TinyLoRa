@@ -16,7 +16,7 @@
  * Modified by Brent Rubell for Adafruit Industries.
  *
  *
- * BSD license, all text here must be included in any redistribution.
+ * LGPL license, all text here must be included in any redistribution.
  *
  */
 

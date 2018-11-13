@@ -22,11 +22,12 @@
  *
  * @section author Author
  *
- * Written by Ideetron B.V., modified by Brent Rubell for Adafruit Industries.
+ * Copyright 2015, 2016 Ideetron B.V.
+ * Modified by Brent Rubell for Adafruit Industries.
  *
  * @section license License
  *
- * BSD license, all text here must be included in any redistribution.
+ * LGPL license, all text here must be included in any redistribution.
  *
  */
 #include "TinyLoRa.h"
