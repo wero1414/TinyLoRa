@@ -17,7 +17,7 @@ Guide.
 - [Adafruit Feather M0 with RFM95 LoRa Radio](https://www.adafruit.com/product/3178)
 ## License
 
-This open source code is licensed under the MIT license (see [LICENSE](LICENSE)
+This open source code is licensed under the LGPL license (see [LICENSE](LICENSE)
 for details).
 
 Adafruit invests time and resources providing this open source code, please
