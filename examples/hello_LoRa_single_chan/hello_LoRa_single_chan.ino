@@ -5,9 +5,9 @@
 // Please support Adafruit and open source hardware by purchasing
 // products from Adafruit!
 //
-// Written by Brent Rubell for Adafruit Industries
-// Copyright 2018 Adafruit Industries
 // Copyright 2015, 2016 Ideetron B.V.
+//
+// Modified by Brent Rubell for Adafruit Industries, 2018
 /************************** Configuration ***********************************/
 #include <TinyLoRa.h>
 #include <SPI.h>
