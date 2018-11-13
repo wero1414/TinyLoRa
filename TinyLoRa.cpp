@@ -285,9 +285,10 @@ TinyLoRa::TinyLoRa(int8_t rfm_irq, int8_t rfm_nss) {
  /*!
      @brief  Initializes the RFM, including configuring SPI, configuring
              the frameCounter and txrandomNum. 
+     @return True if the RFM has been initialized
  */
  /**************************************************************************/
-void TinyLoRa::begin() 
+bool TinyLoRa::begin() 
 {
 
   // start and configure SPI
@@ -299,6 +300,11 @@ void TinyLoRa::begin()
   // RFM95 _irq as input
   pinMode(_irq, OUTPUT);
 
+  uint8_t ver = RFM_Read(0x42);
+  if(ver!=18){
+    return 0;
+  }
+  
   //Switch RFM to sleep
   RFM_Write(0x01,MODE_SLEEP);
 
@@ -337,10 +343,7 @@ void TinyLoRa::begin()
 
   // init tx random number for first use
   uint8_t txrandomNum = 0x00;
-  #ifdef DEBUG
-    Serial.println("> RFM module initialized"); 
-  #endif
-
+  return 1;
 }
 
 /**************************************************************************/
@@ -438,6 +441,34 @@ void TinyLoRa::RFM_Write(unsigned char RFM_Address, unsigned char RFM_Data)
   digitalWrite(_cs, HIGH);
 }
 
+/**************************************************************************/
+/*!
+    @brief    Funtion that reads a register from the RFM
+    @param    RFM_Address
+              An address of the register to be read.
+    @return   Value exchaged in SPI transaction
+*/
+/**************************************************************************/
+uint8_t TinyLoRa::RFM_Read(uint8_t RFM_Address) {
+    
+    SPI.beginTransaction(RFM_spisettings);
+    
+    digitalWrite(_cs, LOW);
+    
+    SPI.transfer(RFM_Address & 0x7F);
+    
+    uint8_t RFM_Data = SPI.transfer(0x00);
+    
+    digitalWrite(_cs, HIGH);
+      // br: SPI Transfer Debug
+    #ifdef DEBUG
+      Serial.print("SPI Read ADDR: ");
+      Serial.print(RFM_Address, HEX);
+      Serial.print(" DATA: ");
+      Serial.println(RFM_Data, HEX);
+    #endif
+    return RFM_Data;
+}
 /**************************************************************************/
 /*!
     @brief    Function to assemble and send a LoRaWAN package.
